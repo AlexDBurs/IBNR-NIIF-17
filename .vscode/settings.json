@@ -1,0 +1,17 @@
+{
+    "[Python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "python.formatting.provider": "black",
+        "python.formatting.blackArgs": ["--line-length=200"],
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "r.bracketedPaste": true,
+    "[r]": {
+        "editor.formatOnSave": true
+    }
+}
+
+  
