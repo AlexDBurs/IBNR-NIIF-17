@@ -49,9 +49,9 @@ def claims_formatter(doc: pd.DataFrame):
     return formatted_doc
 
 #Parsear argumentos
-parser = argparse.ArgumentParser(description="Parseador de Excel de SSN a CSV con FACPCE aplicado  al a ultima fecha del triángulo.")
+parser = argparse.ArgumentParser(description="Parseador de Excel de SSN a CSV con FACPCE aplicado a la ultima fecha del triángulo.")
 parser.add_argument("tri_input", type = str, help = "Ruta del Excel del triángulo de la SSN.")
-parser.add_argument("--tri_facpce", type = str, help = "Rura del Excel con el índice de FACPCE.",
+parser.add_argument("--tri_facpce", type = str, help = "Ruta del Excel con el índice de FACPCE.",
                      default = ".\\sample\\Indice-FACPCE-Res.-JG-539-18-_2025-07-1.xlsx")
 args = parser.parse_args()
 
@@ -65,7 +65,7 @@ facpce_input = pd.read_excel(
     args.tri_facpce, skiprows=2, skipfooter=4
 )
 
-# Tratamiendo desarrollo de stos
+# Tratamiento desarrollo de stos
 # sto_input = dict(itertools.islice(sto_input.items(), 3, len(sto_input)))
 sto_input_formateado = [claims_formatter(sto_input[k]) for k in sto_input.keys() if (k[0] == "2") or (k[0] == "1")]
 db_stos = pd.concat(sto_input_formateado)
@@ -118,7 +118,7 @@ triang_stos_act = triang_stos.cum_to_incr() * triang_facpce
 
 
 df_triang = triang_stos_act.to_frame(keepdims=True)
-print(df_triang.head(10))
+
 # df_triang = triang_stos_act.incr_to_cum().link_ratio.to_frame(keepdims=True)
 df_triang["development"] = df_triang["development"] / 12
 

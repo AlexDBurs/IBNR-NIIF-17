@@ -102,6 +102,8 @@ triangle_long <- read.csv(
 )
 
 # Armar los datasets
+# print unique values for debugging, or remove if not needed
+print(unique(triangle_long$Ramo))
 tri_RC <- subset(triangle_long, Ramo %in% "RC")
 tri_RC$origin <- as.integer(substr(tri_RC$origin, 1, 4))
 tri_RC.incr <- as.triangle(
@@ -116,51 +118,73 @@ tri_RC.pag <- as.triangle(
     dev = "development",
     value = "Pagados"
 )
-tri_RC.pend <- as.triangle(
-    tri_RC,
-    origin = "origin",
-    dev = "development",
-    value = "Pendientes"
-)
+# tri_RC.pend <- as.triangle(
+#     tri_RC,
+#     origin = "origin",
+#     dev = "development",
+#     value = "Pendientes"
+# )
 tri_RC.incr_cum <- incr2cum(tri_RC.incr)
 tri_RC.pag_cum <- incr2cum(tri_RC.pag)
-tri_RC.pend_cum <- incr2cum(tri_RC.pend)
+#tri_RC.pend_cum <- incr2cum(tri_RC.pend)
 
 # Armo graficos para ver la parte que quiero analizar
-triangulo_analizar <- as.triangle(tri_RC.incr_cum[1:10, 1:10])
-triangulo_analizar[lower.tri(triangulo_analizar)[, c(10:1), drop = FALSE]] <- NA
-plot(tri_RC.incr)
-plot(tri_RC.incr_cum)
+#triangulo_analizar <- as.triangle(tri_RC.incr_cum[1:10, 1:10])
+#triangulo_analizar[lower.tri(triangulo_analizar)[, c(10:1), drop = FALSE]] <- NA
+#plot(tri_RC.incr)
+#plot(tri_RC.incr_cum)
 
 
 RAA <- tri_RC.incr_cum
-tri_RC.incr_cum.dev_prom_smple <- c(attr(ata(RAA), "vwtd")) # --> "vwtd" para E(Xi+1)/E(Xi+1)
-tri_RC.incr_cum.dev_prom_pond <- c(attr(ata(RAA), "smpl")) # --> "smpl" para E(xi+1/xi)
-tri_RC.incr_cum.link_ratios <- RAA[, 2:ncol(RAA)] / RAA[, 1:(ncol(RAA) - 1)]
+#tri_RC.incr_cum.dev_prom_smple <- c(attr(ata(RAA), "vwtd")) # --> "vwtd" para E(Xi+1)/E(Xi+1)
+#tri_RC.incr_cum.dev_prom_pond <- c(attr(ata(RAA), "smpl")) # --> "smpl" para E(xi+1/xi)
+#tri_RC.incr_cum.link_ratios <- RAA[, 2:ncol(RAA)] / RAA[, 1:(ncol(RAA) - 1)]
 
-dev_acum_list <- development_acum(
-    tri_RC.incr_cum.link_ratios,
-    tri_RC.incr_cum.dev_prom_pond,
-    complete_triangle = FALSE
-)
-tri_RC.incr_cum.full_link_rt <- dev_acum_list$link_ratios
-tri_RC.incr_cum.full_link_rt2 <- dev_acum_list$link_ratios_acum
-tri_RC.incr_cum.full_link_rt3 <- dev_acum_list$link_ratios_acum2
+# dev_acum_list <- development_acum(
+#     tri_RC.incr_cum.link_ratios,
+#     tri_RC.incr_cum.dev_prom_pond,
+#     complete_triangle = FALSE
+# )
+# tri_RC.incr_cum.full_link_rt <- dev_acum_list$link_ratios
+# tri_RC.incr_cum.full_link_rt2 <- dev_acum_list$link_ratios_acum
+# tri_RC.incr_cum.full_link_rt3 <- dev_acum_list$link_ratios_acum2
 
-plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt)), lattice = FALSE)
-plot(
-    as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt2)[,
-        c(ncol(tri_RC.incr_cum.full_link_rt2):1),
-        drop = FALSE
-    ]),
-    lattice = FALSE
-)
-plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt3)), lattice = TRUE)
+# plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt)), lattice = FALSE)
+# plot(
+#     as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt2)[,
+#         c(ncol(tri_RC.incr_cum.full_link_rt2):1),
+#         drop = FALSE
+#     ]),
+#     lattice = FALSE
+# )
+# plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt3)), lattice = TRUE)
 
 
 tri_RC.incr_cum.rgaa <- cl_rgaa(triang = tri_RC.incr_cum, tail = 1.05)
 
 mack <- MackChainLadder(tri_RC.incr_cum, est.sigma = "Mack")
 
-plot(mack)
-plot(mack, lattice = TRUE)
+# plot(mack)
+# plot(mack, lattice = TRUE)
+
+# Following the example in Quarg's (2004) paper:
+MCL <- MunichChainLadder(tri_RC.pag_cum, tri_RC.incr_cum, est.sigmaP=0.1, est.sigmaI=0.1)
+MCL
+# plot(MCL)
+
+
+## See also the example in section 8 of England & Verrall (2002)
+## on page 55.
+B <- BootChainLadder(tri_RC.incr_cum, R=1000, process.distr="od.pois")
+B
+plot(B)
+## fit a distribution to the IBNR
+library(MASS)
+plot(ecdf(B$IBNR.Totals))
+## fit a log-normal distribution
+fit <- fitdistr(B$IBNR.Totals[B$IBNR.Totals>0], "lognormal")
+fit
+curve(plnorm(x,fit$estimate["meanlog"], fit$estimate["sdlog"]),
+      col="red", add=TRUE)
+PIC <- PaidIncurredChain(tri_RC.pag_cum, tri_RC.incr_cum)
+PIC
