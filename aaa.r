@@ -92,7 +92,7 @@ cl_rgaa <- function(triang, tail) {
 
 
 # Cargar el archivo
-file_path <- ".\\sample\\ssn_20192020_desarrollo_siniestros_automotores.csv"
+file_path <- ".\\sample\\ssn_20232024_desarrollo_siniestros_automotores.csv"
 triangle_long <- read.csv(
     file_path,
     sep = ",",
@@ -118,46 +118,97 @@ tri_RC.pag <- as.triangle(
     dev = "development",
     value = "Pagados"
 )
-# tri_RC.pend <- as.triangle(
-#     tri_RC,
-#     origin = "origin",
-#     dev = "development",
-#     value = "Pendientes"
-# )
+tri_RC.pend <- as.triangle(
+    tri_RC,
+    origin = "origin",
+    dev = "development",
+    value = "Pendientes"
+)
+
 tri_RC.incr_cum <- incr2cum(tri_RC.incr)
 tri_RC.pag_cum <- incr2cum(tri_RC.pag)
-#tri_RC.pend_cum <- incr2cum(tri_RC.pend)
+tri_RC.pend_cum <- incr2cum(tri_RC.pend)
 
 # Armo graficos para ver la parte que quiero analizar
-#triangulo_analizar <- as.triangle(tri_RC.incr_cum[1:10, 1:10])
-#triangulo_analizar[lower.tri(triangulo_analizar)[, c(10:1), drop = FALSE]] <- NA
-#plot(tri_RC.incr)
-#plot(tri_RC.incr_cum)
+# triangulo_analizar <- as.triangle(tri_RC.incr_cum[1:10, 1:10])
+# triangulo_analizar[lower.tri(triangulo_analizar)[, c(10:1), drop = FALSE]] <- NA
+# plot(tri_RC.incr)
+# plot(tri_RC.incr_cum)
 
+triangulo_analizar <- as.triangle(tri_RC.incr_cum)
+plot(tri_RC.incr)
+plot(tri_RC.incr_cum)
 
 RAA <- tri_RC.incr_cum
-#tri_RC.incr_cum.dev_prom_smple <- c(attr(ata(RAA), "vwtd")) # --> "vwtd" para E(Xi+1)/E(Xi+1)
-#tri_RC.incr_cum.dev_prom_pond <- c(attr(ata(RAA), "smpl")) # --> "smpl" para E(xi+1/xi)
-#tri_RC.incr_cum.link_ratios <- RAA[, 2:ncol(RAA)] / RAA[, 1:(ncol(RAA) - 1)]
 
-# dev_acum_list <- development_acum(
-#     tri_RC.incr_cum.link_ratios,
-#     tri_RC.incr_cum.dev_prom_pond,
-#     complete_triangle = FALSE
-# )
-# tri_RC.incr_cum.full_link_rt <- dev_acum_list$link_ratios
-# tri_RC.incr_cum.full_link_rt2 <- dev_acum_list$link_ratios_acum
-# tri_RC.incr_cum.full_link_rt3 <- dev_acum_list$link_ratios_acum2
+n <- ncol(tri_RC.incr_cum)
+f <- sapply(1:(n - 1), function(i) {
+    sum(RAA[c(1:(n - i)), i + 1]) / sum(RAA[c(1:(n - i)), i])
+})
+f
+dev.period <- 1:(n - 1)
+plot(
+    log(f - 1) ~ log(1 / dev.period),
+    main = "Log-linear extrapolation of age-to-age factors"
+)
+tail.model <- lm(log(f - 1) ~ log(1 / dev.period))
+abline(tail.model)
+co <- coef(tail.model)
+## extrapolate another 100 dev. period
+tail <- exp(co[1] + log(1 / c(n:(n + 100))) * co[2]) + 1
+f.tail <- prod(tail)
+f.tail
+plot(
+    100 * (rev(1 / cumprod(rev(c(f, tail[tail > 1.0001]))))),
+    t = "b",
+    main = "Expected claims development pattern",
+    xlab = "Dev. period",
+    ylab = "Development % of ultimate loss"
+)
 
-# plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt)), lattice = FALSE)
-# plot(
-#     as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt2)[,
-#         c(ncol(tri_RC.incr_cum.full_link_rt2):1),
-#         drop = FALSE
-#     ]),
-#     lattice = FALSE
-# )
-# plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt3)), lattice = TRUE)
+dev.period <- 1:(n - 1)
+plot(
+    log(f - 1) ~ dev.period,
+    main = "Log-linear extrapolation of age-to-age factors"
+)
+tail.model <- lm(log(f - 1) ~ dev.period)
+abline(tail.model)
+co <- coef(tail.model)
+## extrapolate another 100 dev. period
+tail <- exp(co[1] + c(n:(n + 1000)) * co[2]) + 1
+f.tail <- prod(tail)
+f.tail
+plot(
+    100 * (rev(1 / cumprod(rev(c(f, tail[tail > 1.0001]))))),
+    t = "b",
+    main = "Expected claims development pattern",
+    xlab = "Dev. period",
+    ylab = "Development % of ultimate loss"
+)
+
+
+tri_RC.incr_cum.dev_prom_smple <- c(attr(ata(RAA), "vwtd")) # --> "vwtd" para E(Xi+1)/E(Xi+1)
+tri_RC.incr_cum.dev_prom_pond <- c(attr(ata(RAA), "smpl")) # --> "smpl" para E(xi+1/xi)
+tri_RC.incr_cum.link_ratios <- RAA[, 2:ncol(RAA)] / RAA[, 1:(ncol(RAA) - 1)]
+
+dev_acum_list <- development_acum(
+    tri_RC.incr_cum.link_ratios,
+    tri_RC.incr_cum.dev_prom_pond,
+    complete_triangle = FALSE
+)
+tri_RC.incr_cum.full_link_rt <- dev_acum_list$link_ratios
+tri_RC.incr_cum.full_link_rt2 <- dev_acum_list$link_ratios_acum
+tri_RC.incr_cum.full_link_rt3 <- dev_acum_list$link_ratios_acum2
+
+plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt)), lattice = FALSE)
+plot(
+    as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt2)[,
+        c(ncol(tri_RC.incr_cum.full_link_rt2):1),
+        drop = FALSE
+    ]),
+    lattice = FALSE
+)
+plot(as.triangle(as.matrix(tri_RC.incr_cum.full_link_rt3)), lattice = TRUE)
 
 
 tri_RC.incr_cum.rgaa <- cl_rgaa(triang = tri_RC.incr_cum, tail = 1.05)
@@ -168,23 +219,30 @@ mack <- MackChainLadder(tri_RC.incr_cum, est.sigma = "Mack")
 # plot(mack, lattice = TRUE)
 
 # Following the example in Quarg's (2004) paper:
-MCL <- MunichChainLadder(tri_RC.pag_cum, tri_RC.incr_cum, est.sigmaP=0.1, est.sigmaI=0.1)
+MCL <- MunichChainLadder(
+    tri_RC.pag_cum,
+    tri_RC.incr_cum,
+    est.sigmaP = 0.1,
+    est.sigmaI = 0.1
+)
 MCL
 # plot(MCL)
 
-
 ## See also the example in section 8 of England & Verrall (2002)
 ## on page 55.
-B <- BootChainLadder(tri_RC.incr_cum, R=1000, process.distr="od.pois")
+B <- BootChainLadder(tri_RC.incr_cum, R = 1000, process.distr = "od.pois")
 B
 plot(B)
 ## fit a distribution to the IBNR
 library(MASS)
 plot(ecdf(B$IBNR.Totals))
 ## fit a log-normal distribution
-fit <- fitdistr(B$IBNR.Totals[B$IBNR.Totals>0], "lognormal")
+fit <- fitdistr(B$IBNR.Totals[B$IBNR.Totals > 0], "lognormal")
 fit
-curve(plnorm(x,fit$estimate["meanlog"], fit$estimate["sdlog"]),
-      col="red", add=TRUE)
+curve(
+    plnorm(x, fit$estimate["meanlog"], fit$estimate["sdlog"]),
+    col = "red",
+    add = TRUE
+)
 PIC <- PaidIncurredChain(tri_RC.pag_cum, tri_RC.incr_cum)
 PIC
