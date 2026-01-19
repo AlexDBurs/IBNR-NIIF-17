@@ -9,6 +9,7 @@
     },
     "python.analysis.typeCheckingMode": "basic",
     "r.bracketedPaste": true,
+    "r.plot.useHttpgd": true,
     "[r]": {
         "editor.formatOnSave": true
     }
