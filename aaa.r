@@ -1,12 +1,12 @@
 library(ChainLadder)
 
 development_acum <- function(
-    link_ratios,
-    tri_development,
-    complete_triangle = TRUE
+  link_ratios,
+  tri_development,
+  complete_triangle = TRUE
 ) {
     if (complete_triangle == TRUE) {
-        #Completo el triangulo de link ratios con el development
+        # Completo el triangulo de link ratios con el development
         na_idx <- which(is.na(link_ratios), arr.ind = TRUE)
         link_ratios[na_idx] <- tri_development[na_idx[, 2]]
 
@@ -63,7 +63,7 @@ cl_rgaa <- function(triang, tail) {
     # Calculo linkratios
     linkratios <- c(attr(ata(triang), "vwtd"), tail)
 
-    #Calculo triangulo entero
+    # Calculo triangulo entero
     n <- ncol(triang)
     triang_full <- cbind(triang, Ult = rep(0, nrow(triang)))
 
@@ -72,7 +72,7 @@ cl_rgaa <- function(triang, tail) {
             linkratios[k]
     }
 
-    #Calculo tabla de resumen
+    # Calculo tabla de resumen
     FDA <- rev(cumprod(rev(linkratios)))
     names(FDA) <- colnames(triang)
     diagonal_actual <- getLatestCumulative(triang)
